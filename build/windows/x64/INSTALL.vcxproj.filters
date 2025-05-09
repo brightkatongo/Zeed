@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\brigh\Desktop\zeed\build\windows\x64\CMakeFiles\c4960d09d34441940b3e659096374ac0\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{22477B98-00E0-362C-A0EE-B5B8CD437A48}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

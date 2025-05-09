@@ -1,0 +1,10 @@
+^C:\USERS\BRIGH\DESKTOP\ZEED\BUILD\WINDOWS\X64\CMAKEFILES\C4960D09D34441940B3E659096374AC0\INSTALL_FORCE.RULE
+setlocal
+cd .
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

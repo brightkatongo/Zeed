@@ -1,0 +1,1 @@
+ C:\\Users\\brigh\\Desktop\\zeed\\.dart_tool\\flutter_build\\774a78f5f5d9bd28f1a96f76db72c062\\native_assets.yaml: 
