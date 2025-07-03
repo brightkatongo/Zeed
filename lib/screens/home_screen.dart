@@ -9,15 +9,20 @@ import 'financial_services_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Add these imports for your screen files
+
+// Auth token provider
+final authTokenProvider = StateProvider<String?>((ref) => null);
+
 // Custom colors provider
 final customColorsProvider = Provider<Map<String, Color>>((ref) => {
-  'primary': const Color(0xFF2E7D32),
-  'secondary': const Color(0xFF1565C0),
-  'accent': const Color(0xFFFFB74D),
-  'background': const Color(0xFFF5F5F5),
-  'surface': Colors.white,
-  'text': const Color(0xFF212121),
-});
+      'primary': const Color(0xFF2E7D32),
+      'secondary': const Color(0xFF1565C0),
+      'accent': const Color(0xFFFFB74D),
+      'background': const Color(0xFFF5F5F5),
+      'surface': Colors.white,
+      'text': const Color(0xFF212121),
+    });
 
 // Language provider
 final isEnglishProvider = StateProvider<bool>((ref) => true);
@@ -26,7 +31,7 @@ final isEnglishProvider = StateProvider<bool>((ref) => true);
 final selectedIndexProvider = StateProvider<int>((ref) => 0);
 
 // Shared preferences provider
-final sharedPreferencesProvider = Provider<SharedPreferences?>((ref) => null);
+final sharedPreferencesProvider = StateProvider<SharedPreferences?>((ref) => null);
 
 // Shared preferences initialization provider
 final sharedPreferencesInitProvider = FutureProvider<SharedPreferences>((ref) async {
@@ -63,22 +68,24 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
   }
 
   Future<void> _checkAuthentication() async {
-    final prefs = ref.read(sharedPreferencesProvider);
+    final prefs = ref.read(sharedPreferencesProvider.notifier).state;
     if (prefs != null) {
       final token = prefs.getString('token');
       ref.read(authTokenProvider.notifier).state = token;
       
       if (token == null) {
         // Navigate to login screen if not authenticated
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        }
       }
     }
   }
 
   Future<void> _logout() async {
-    final prefs = ref.read(sharedPreferencesProvider);
+    final prefs = ref.read(sharedPreferencesProvider.notifier).state;
     if (prefs != null) {
       await prefs.remove('token');
       ref.read(authTokenProvider.notifier).state = null;
@@ -846,7 +853,8 @@ class _HomePageState extends ConsumerState<HomePage> with SingleTickerProviderSt
       },
     );
   }
-Widget _buildBottomNavigationBar() {
+
+  Widget _buildBottomNavigationBar() {
     final customColors = ref.watch(customColorsProvider);
     final isEnglish = ref.watch(isEnglishProvider);
     final selectedIndex = ref.watch(selectedIndexProvider);
@@ -913,362 +921,6 @@ Widget _buildBottomNavigationBar() {
           ),
         );
       },
-    );
-  }
-}
-
-// AI Assistant Screen implementation
-class AIAssistantScreen extends StatefulWidget {
-  final bool isEnglish;
-  final Map<String, Color> customColors;
-
-  const AIAssistantScreen({
-    Key? key,
-    required this.isEnglish,
-    required this.customColors,
-  }) : super(key: key);
-
-  @override
-  State<AIAssistantScreen> createState() => _AIAssistantScreenState();
-}
-
-class _AIAssistantScreenState extends State<AIAssistantScreen> {
-  final TextEditingController _messageController = TextEditingController();
-  final List<Map<String, dynamic>> _messages = [];
-  bool _isTyping = false;
-
-  @override
-  void dispose() {
-    _messageController.dispose();
-    super.dispose();
-  }
-
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
-
-    final userMessage = _messageController.text;
-    setState(() {
-      _messages.add({
-        'text': userMessage,
-        'isUser': true,
-        'timestamp': DateTime.now(),
-      });
-      _isTyping = true;
-    });
-    _messageController.clear();
-
-    // Simulate AI response after a short delay
-    Future.delayed(const Duration(seconds: 1), () {
-      String response = '';
-      if (widget.isEnglish) {
-        response = "I'm your agricultural assistant. How can I help you with your farming or financial needs today?";
-      } else {
-        response = "Ndine wothandiza wanu wa ulimi. Ndingakuthandizeni bwanji lero?";
-      }
-      
-      if (_messages.isNotEmpty && _messages.last['isUser'] == true) {
-        if (userMessage.toLowerCase().contains('weather') || 
-            userMessage.toLowerCase().contains('rain')) {
-          response = widget.isEnglish 
-              ? "The weather forecast shows a 70% chance of rain tomorrow. It might be a good day to postpone field work."
-              : "Nyengo ya mawa ikuoneka kuti mvula idzagwa. Ndi tsiku labwino kusiya ntchito za kumunda.";
-        } else if (userMessage.toLowerCase().contains('price') || 
-                  userMessage.toLowerCase().contains('market')) {
-          response = widget.isEnglish 
-              ? "Current market prices for maize are between K230-K270 per 50kg bag, depending on quality and location."
-              : "Mtengo wa chimanga pakadali pano ndi pakati pa K230-K270 pa thumba la 50kg.";
-        } else if (userMessage.toLowerCase().contains('loan') || 
-                  userMessage.toLowerCase().contains('finance')) {
-          response = widget.isEnglish 
-              ? "We offer agricultural loans with competitive interest rates. Would you like me to provide more information about our loan products?"
-              : "Timapeleka ngongole za ulimi ndi mitengo yotsika. Mukufuna kudziwa zambiri za ngongole zathu?";
-        }
-      }
-      
-      if (mounted) {
-        setState(() {
-          _messages.add({
-            'text': response,
-            'isUser': false,
-            'timestamp': DateTime.now(),
-          });
-          _isTyping = false;
-        });
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: widget.customColors['primary'],
-        title: Text(
-          widget.isEnglish ? 'AI Assistant' : 'Wothandiza wa AI',
-          style: TextStyle(color: widget.customColors['surface']),
-        ),
-        iconTheme: IconThemeData(color: widget.customColors['surface']),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                _messages.clear();
-              });
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _messages.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.smart_toy,
-                          size: 64,
-                          color: widget.customColors['primary']!.withOpacity(0.5),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          widget.isEnglish
-                              ? 'Hello! How can I help you today?'
-                              : 'Moni! Ndingakuthandizeni bwanji lero?',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: widget.customColors['text']!.withOpacity(0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length,
-                    reverse: true,
-                    itemBuilder: (context, index) {
-                      final message = _messages[_messages.length - 1 - index];
-                      return _buildMessageBubble(message);
-                    },
-                  ),
-          ),
-          if (_isTyping)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    widget.isEnglish ? 'Typing...' : 'Kulemba...',
-                    style: TextStyle(color: widget.customColors['text']),
-                  ),
-                ],
-              ),
-            ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  offset: const Offset(0, -2),
-                  blurRadius: 4,
-                  color: Colors.black.withOpacity(0.1),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: widget.isEnglish
-                          ? 'Type your message...'
-                          : 'Lembani uthenga wanu...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                    ),
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                FloatingActionButton(
-                  mini: true,
-                  backgroundColor: widget.customColors['primary'],
-                  child: const Icon(Icons.send, color: Colors.white),
-                  onPressed: _sendMessage,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMessageBubble(Map<String, dynamic> message) {
-    final isUser = message['isUser'] as bool;
-    final text = message['text'] as String;
-    final timestamp = message['timestamp'] as DateTime;
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isUser) ...[
-            CircleAvatar(
-              backgroundColor: widget.customColors['secondary'],
-              child: const Icon(Icons.smart_toy, color: Colors.white, size: 18),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isUser
-                    ? widget.customColors['primary']
-                    : Colors.grey[200],
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    text,
-                    style: TextStyle(
-                      color: isUser ? Colors.white : widget.customColors['text'],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isUser
-                          ? Colors.white.withOpacity(0.7)
-                          : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (isUser) const SizedBox(width: 8),
-          if (isUser)
-            CircleAvatar(
-              backgroundColor: widget.customColors['accent'],
-              child: const Icon(Icons.person, color: Colors.white, size: 18),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// For completeness, adding stubs for other screens referenced in the code
-
-class SellProductsScreen extends StatelessWidget {
-  const SellProductsScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sell Products'),
-      ),
-      body: const Center(
-        child: Text('Sell Products Screen Content'),
-      ),
-    );
-  }
-}
-
-class FinancialServicesScreen extends StatelessWidget {
-  const FinancialServicesScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Financial Services'),
-      ),
-      body: const Center(
-        child: Text('Financial Services Screen Content'),
-      ),
-    );
-  }
-}
-
-class DashboardScreen extends StatelessWidget {
-  final Map<String, Color> customColors;
-  final bool isEnglish;
-  
-  const DashboardScreen({
-    Key? key,
-    required this.customColors,
-    required this.isEnglish,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: customColors['primary'],
-        title: Text(
-          isEnglish ? 'Dashboard' : 'Mbiri Yonse',
-          style: TextStyle(color: customColors['surface']),
-        ),
-      ),
-      body: const Center(
-        child: Text('Dashboard Screen Content'),
-      ),
-    );
-  }
-}
-
-class ReportsAnalyticsScreen extends StatelessWidget {
-  final Map<String, Color> customColors;
-  final bool isEnglish;
-  
-  const ReportsAnalyticsScreen({
-    Key? key,
-    required this.customColors,
-    required this.isEnglish,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: customColors['primary'],
-        title: Text(
-          isEnglish ? 'Reports & Analytics' : 'Malipoti ndi Kuwunika',
-          style: TextStyle(color: customColors['surface']),
-        ),
-      ),
-      body: const Center(
-        child: Text('Reports & Analytics Screen Content'),
-      ),
     );
   }
 }
